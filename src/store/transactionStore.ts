@@ -9,6 +9,7 @@ interface TransactionStore {
   add: (data: TransactionFormData) => void
   update: (id: string, data: TransactionFormData) => void
   remove: (id: string) => void
+  importAll: (data: Transaction[]) => void
 }
 
 export const useTransactionStore = create<TransactionStore>()(
@@ -38,6 +39,10 @@ export const useTransactionStore = create<TransactionStore>()(
 
       remove: (id) => {
         set((s) => ({ transactions: s.transactions.filter((tx) => tx.id !== id) }))
+      },
+
+      importAll: (data) => {
+        set({ transactions: data })
       },
     }),
     { name: 'ghichep_transactions' }

@@ -1,11 +1,12 @@
-import { useState, useMemo } from 'react'
-import { Plus, Search, X } from 'lucide-react'
+import { useState, useMemo, useRef } from 'react'
+import { Plus, Search, X, Download, Upload } from 'lucide-react'
 import { getYear, getMonth } from 'date-fns'
 import { useGroupedByDay, type FilterOptions } from '@/hooks/useTransactions'
+import { useTransactionStore } from '@/store/transactionStore'
 import TransactionCard from '@/components/transaction/TransactionCard'
 import TransactionForm from '@/components/transaction/TransactionForm'
 import { formatProfit, cn } from '@/lib/utils'
-import type { OrderType, Result } from '@/types/transaction'
+import type { OrderType, Result, Transaction } from '@/types/transaction'
 
 const now = new Date()
 const currentYear = getYear(now)
@@ -14,6 +15,8 @@ const years = Array.from({ length: 5 }, (_, i) => currentYear - i)
 const months = Array.from({ length: 12 }, (_, i) => i + 1)
 
 export default function Transactions() {
+  const { transactions, importAll } = useTransactionStore()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [showForm, setShowForm] = useState(false)
   const [search, setSearch] = useState('')
   const [year, setYear] = useState<number | undefined>(currentYear)
@@ -28,16 +31,60 @@ export default function Transactions() {
 
   const groups = useGroupedByDay(filters)
 
+  function handleExport() {
+    const blob = new Blob([JSON.stringify(transactions, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `giao-dich-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result as string) as Transaction[]
+        if (!Array.isArray(data)) throw new Error()
+        if (window.confirm(`Nhập ${data.length} giao dịch? Dữ liệu hiện tại sẽ bị thay thế.`)) {
+          importAll(data)
+        }
+      } catch {
+        alert('File không hợp lệ. Vui lòng chọn file JSON được xuất từ app này.')
+      }
+      e.target.value = ''
+    }
+    reader.readAsText(file)
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">Giao dịch</h2>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
-        >
-          <Plus size={16} /> Thêm mới
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            <Download size={14} /> Xuất
+          </button>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            <Upload size={14} /> Nhập
+          </button>
+          <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+          >
+            <Plus size={16} /> Thêm mới
+          </button>
+        </div>
       </div>
 
       {showForm && (
