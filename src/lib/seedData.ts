@@ -5,7 +5,9 @@ function dt(day: number, hour: number, minute = 0) {
   return `2026-05-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`
 }
 
-export const SAMPLE_TRANSACTIONS: Transaction[] = [
+type RawTx = Omit<Transaction, 'result'> & { result?: Transaction['result'] }
+
+export const SAMPLE_TRANSACTIONS: Transaction[] = ([
   {
     id: uuidv4(),
     entryTime: dt(1, 20, 15),
@@ -150,4 +152,4 @@ export const SAMPLE_TRANSACTIONS: Transaction[] = [
     reason: 'ETH ETF approval catalyst, giá vượt kháng cự 3400 với volume lớn',
     createdAt: dt(22, 8, 30),
   },
-].map((tx) => ({ ...tx, result: calcResult(tx.profit) }))
+] as RawTx[]).map((tx) => ({ ...tx, result: calcResult(tx.profit) }))

@@ -4,7 +4,7 @@ import { getYear, getMonth } from 'date-fns'
 import { useGroupedByDay, type FilterOptions } from '@/hooks/useTransactions'
 import TransactionCard from '@/components/transaction/TransactionCard'
 import TransactionForm from '@/components/transaction/TransactionForm'
-import { formatCurrency, formatProfit, cn } from '@/lib/utils'
+import { formatProfit, cn } from '@/lib/utils'
 import type { OrderType, Result } from '@/types/transaction'
 
 const now = new Date()
